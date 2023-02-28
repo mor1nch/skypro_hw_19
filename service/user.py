@@ -17,6 +17,7 @@ class UserService:
         return self.dao.get_all()
 
     def create(self, data: dict) -> list:
+        data["password"] = self.get_hash(data["password"])
         return self.dao.create(data)
 
     def update(self, user_id: int) -> None:
@@ -29,12 +30,13 @@ class UserService:
         return self.dao.get_by_username(username)
 
     def get_hash(self, password: str):
-        return hashlib.pbkdf2_hmac(
+        hash_digest = hashlib.pbkdf2_hmac(
             'sha256',
             password.encode('utf-8'),
             PWD_HASH_SALT,
             PWD_HASH_ITERATIONS
-        ).decode("utf-8", "ignore")
+        )
+        return base64.b64encode(hash_digest)
 
     def compare_passwords(self, password_hash, other_password: str) -> bool:
         decode_digest = base64.b64decode(password_hash)
@@ -45,5 +47,4 @@ class UserService:
             PWD_HASH_SALT,
             PWD_HASH_ITERATIONS
         )
-
         return hmac.compare_digest(decode_digest, hash_digest)
